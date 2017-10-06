@@ -27,7 +27,7 @@ Color = Enum('Color', 'WHITE RED YELLOW GREEN BLUE')
 
 Card = namedtuple('Card', 'color value')
 
-GameState = Enum('GameState', 'NOT_STARTED PLAYING WON LOST')
+GameState = Enum('GameState', 'NOT_STARTED PLAYING FINAL_ROUND WON LOST')
 
 Hint = namedtuple('Hint', 'indices type_ content')
 
@@ -57,6 +57,7 @@ class Game:
         self.bombs = bombs
         self.playing_index = 0
         self.hands = defaultdict(list)
+        self.hints = defaultdict(list)
         self.table = defaultdict(int)
         self.state = GameState.PLAYING
 
@@ -80,6 +81,7 @@ class Game:
         assert to_pid in self.pids
         assert from_pid != to_pid
         assert self.validate_hint(hint, self.hands[to_pid])
+        self.hints[to_pid].append(hint)
 
     def validate_hint(self, hint, hand):
         complete_indices = set()
