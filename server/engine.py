@@ -87,4 +87,5 @@ class Game:
             if ((hint.type_ == HintType.COLOR and hint.contents == card.color) or
                (hint.type_ == HintType.VALUE and hint.contents == card.value)):
                 complete_indices.add(i)
-        return complete_indices == set(hint.indices)
+        return (complete_indices == set(hint.indices) and
+                len(complete_indices) > 0)
