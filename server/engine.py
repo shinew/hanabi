@@ -1,6 +1,6 @@
 from collections import namedtuple, defaultdict
 from enum import Enum
-from random import sample
+import random
 
 # card value -> # of cards of that value per color
 VALUE_DISTRIBUTION = {
@@ -27,38 +27,59 @@ Color = Enum('Color', 'WHITE RED YELLOW GREEN BLUE')
 
 Card = namedtuple('Card', 'color value')
 
-GameState = Enum('GameState', 'NOT_STARTED PLAYING FINAL_ROUND WON LOST')
+State = Enum('State', 'NOT_STARTED PLAYING FINAL_ROUND ENDED')
 
 Hint = namedtuple('Hint', 'indices type_ content')
 
 HintType = Enum('HintType', 'COLOR VALUE')
 
-def gen_cards(shuffle):
+def gen_cards():
     cards = []
     for color in Color:
         for value in range(1, 6):
             for _ in range(VALUE_DISTRIBUTION[value]):
                 cards.append(Card(color, value))
-    return shuffle(cards)
+    random.shuffle(cards)
+    return cards
+
+class Player:
+    def __init__(self, pid):
+        self.pid = pid
+        self.hand =[]
+
+class StateDFA:
+    def __init__(self):
+        self.state = State.NOT_STARTED
+        self.whose_turn = 0
+        self.ends_with = 0
+        self.won = False
+        self.lost = False
+
+    def start(self, starting_player=0):
+        assert self.state == State.NOT_STARTED
+        self.state = State.PLAYING
+        self.whose_turn = starting_player
+
+    def play(self, num_cards_left):
+        assert self.state == State.PLAYING or self.state == State.FINAL_ROUND
+        if self.state == State.PLAYING:
+            # TODO
 
 class Game:
     def __init__(
             self,
             gid,
             pids=[],
-            shuffle=lambda x: sample(x, k=len(x)),
             time_tokens=NUM_TIME_TOKENS,
             bombs=NUM_BOMBS):
         self.gid = gid
-        self.pids = pids
-        self.shuffle = shuffle
-        self.deck = gen_cards(shuffle)
-        self.time_tokens = time_tokens
-        self.bombs = bombs
-        self.playing_index = 0
-        self.hands = defaultdict(list)
-        self.hints = defaultdict(list)
-        self.table = defaultdict(int)
+        self.players = list(map(lambda pid: Player(pid, []), pids))
+        self.deck = gen_cards()
+        self.discarded = []
+        self.num_hints = time_tokens
+        self.max_hints = time_tokens
+        self.lives = bombs
+        self.board = defaultdict(int)
         self.state = GameState.PLAYING
 
     def add_pid(self, pid):
@@ -70,9 +91,9 @@ class Game:
         assert self.state == GameState.NOT_STARTED
         assert 2 <= len(self.pids) <= 5
         self.state = GameState.PLAYING
-        self.pids = self.shuffle(self.pids)
+        random.shuffle(self.pids)
         for pid in self.pids:
-            for _ in range(HAND_DISTRIBUTION):
+            for _ in range(HAND_DISTRIBUTION[len(self.pids)]):
                 self.hands[pid].append(self.deck.pop())
 
     def hint(self, from_pid, to_pid, hint):

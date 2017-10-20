@@ -1,0 +1,35 @@
+type Card = color * value
+
+type Hand = (Card, hinted : bool) list
+
+type Board = color -> max_value_placed
+
+type Player =
+{ id : Id
+, hand : Hand
+}
+
+type State =
+ | Not_started
+ | Playing (whose_turn : index)
+ | Final_round (ends_with : index)
+ | Ended (won | lost)
+
+type Game =
+{ players : Player list
+, deck : Card list
+, discarded : Card list
+, board : Board
+, state : State
+, hints : unsigned int
+, lives : unsigned int
+}
+
+type Hint =
+ | Color color
+ | Value value
+
+game.start()
+game.play(pid, card_index : index)
+game.hint(from_id, to_pid, card_indices : index set, hint)
+game.discard(pid, card_index : index)
